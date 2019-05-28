@@ -1,21 +1,20 @@
-var camera, scene, renderer;
-var floorGeometry, floorMaterial, floorMesh, floorTexture;
-var boxGeometry, boxMaterial, boxMesh, boxTexture;
-var controls;
+var scene, camera, renderer;
+var light;
+var floorGeometry, floorMaterial, floorMesh;
+var boxGeometry, boxMaterial, cubeMesh;
 
-var prevTime = performance.now();
-var velocity = new THREE.Vector3();
+// if pointer lock is on this is true
+var controlsEnabled = false;
 
-// forward direction for camera
-var forwardDirection = new THREE.Vector3();
+// forward direction for player
+var forwardDirection = new THREE.Vector3(1, 0, 0);
+// up direction for player
+var upDirection = new THREE.Vector3(0, 1, 0);
+// look direction for player
+var lookDirection = new THREE.Vector3(0, 0, 0);
 
-// Does the document have pointer lock for mouse controls?
-var havePointerLock = 'pointerLockElement' in document ||
-    'mozPointerLockElement' in document ||
-    'webkitPointerLockElement' in document;
-
-// Main initialization function
-function init() {
+// main initialization function for setting things up before the rendering starts
+var init = function () {
     // sets the request pointer lock to be able to handle any supported browser
     document.requestPointerLock = document.requestPointerLock ||
         document.mozRequestPointerLock ||
@@ -41,31 +40,33 @@ function init() {
     document.addEventListener('mozpointerlockerror', errorCallback, false);
     document.addEventListener('webkitpointerlockerror', errorCallback, false);
 
-    // Create a camera
-    // 	Set a Field of View (FOV) of 75 degrees
-    // 	Set an Apsect Ratio of the inner width divided by the inner height of the window
-    //	Set the 'Near' distance at which the camera will start rendering scene objects to 2
-    //	Set the 'Far' (draw distance) at which objects will not be rendered to 1000
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
-
-    // Create a scene
+    // Basic three.js setup of scene(world) and camera
     scene = new THREE.Scene();
+	camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
+    // three js renderer
+    renderer = new THREE.WebGLRenderer();
+    // size of viewport into the scene
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    // slap that rendered image into the html somewhere
+	document.body.appendChild( renderer.domElement );
+
+    // Dem cubes tho
+	boxGeometry = new THREE.BoxGeometry( 10, 10, 10 );
+    boxMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+    // a Mesh is a material and a geometry
+    cubeMesh = new THREE.Mesh( boxGeometry, boxMaterial );
+    scene.add( cubeMesh );
+    cubeMesh.position.y = 10;
+    
     // Create a HemisphereLight source
-    var light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
+    light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
     light.position.set( 0.5, 1, 0.75 );
     scene.add( light );
 
-    // Create First Person Controls
-    controls = new THREE.FirstPersonControls( camera );
-    controls.noFly = true;
-    controls.object.position.z = 50;
-    controls.object.position.y = 10;
-    scene.add( controls.object );
-
     // Create a PlaneGeometry for the floor
     floorGeometry = new THREE.PlaneGeometry( 100, 100, 100, 100 );
-    // Roate the floor "down"
+    // Rotate the floor "down"
     floorGeometry.rotateX( - Math.PI / 2 );
 
     // Create a floor material
@@ -73,105 +74,39 @@ function init() {
     floorMesh = new THREE.Mesh( floorGeometry, floorMaterial );
     scene.add( floorMesh );
 
-    // Create a geometry
-    // 	Create a box (cube) of 10 width, length, and height
-    boxGeometry = new THREE.BoxGeometry( 10, 10, 10 );
-    // Create a MeshPhongMaterial with a loaded texture
-    boxMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000} );
+    camera.position.y = 10;
+    camera.position.z = 50;
 
-    // Combine the geometry and material into a mesh
-    boxMesh = new THREE.Mesh( boxGeometry, boxMaterial );
-    // Add the mesh to the scene
-    scene.add( boxMesh );
-    boxMesh.position.y = 5;
+    console.log('initialized');
+};
 
-    // Create a WebGL Renderer
-    renderer = new THREE.WebGLRenderer();
-    // Set the size of the renderer to the inner width and inner height of the window
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    // Add in the created DOM element to the body of the document
-    document.body.appendChild( renderer.domElement );
+var animate = function () {
+	requestAnimationFrame( animate );
 
-}
+	cubeMesh.rotation.x += 0.01;
+    cubeMesh.rotation.y += 0.01;
 
-function animate() {
-    // kinda like interval but better
-    requestAnimationFrame(animate);
-
-    //update forward direction to camera direction
-    controls.object.getWorldDirection(forwardDirection);
-    console.log(forwardDirection);
-
-    //rotate the cube
-    boxMesh.rotation.y += 0.01;
-
-    // Process player controls
-    //playerControls();
-
-    //render what the camera is seeing
-    renderer.render(scene, camera);
-}
-
-function playerControls () {
-
-    // Are the controls enabled? (Does the browser have pointer lock?)
-    if ( controls.enabled ) {
-        // Save the current time
-        var time = performance.now();
-        // Create a delta value based on current time
-        var delta = ( time - prevTime ) / 1000;
-
-        camera.getWorldDirection(forwardDirection);
-
-        // Set the velocity.x and velocity.z using the calculated time delta
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
-
-        // As velocity.y is our "gravity," calculate delta
-        velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
-
-        if ( controls.moveForward ) {
-            velocity.z -= 400.0 * delta;
-        }
-
-        if ( controls.moveBackward ) {
-            velocity.z += 400.0 * delta;
-        }
-
-        if ( controls.moveLeft ) {
-            velocity.x -= 400.0 * delta;
-        }
-
-        if ( controls.moveRight ) {
-            velocity.x += 400.0 * delta;
-        }
-
-        // Update the position using the changed delta
-        controls.object.translateX( velocity.x * delta );
-        controls.object.translateY( velocity.y * delta );
-        controls.object.translateZ( velocity.z * delta );
-
-        // Prevent the camera/player from falling out of the 'world'
-        if ( controls.object.position.y < 10 ) {
-
-            velocity.y = 0;
-            controls.object.position.y = 10;
-
-        }
-
-        // Save the time for future delta calculations
-        prevTime = time;
-    }
-}
+	renderer.render( scene, camera );
+};
 
 // is called when pointer is locked and the mouse is moved
 function updateMouse(e) {
-    if(e.movementY < 0) {
-        controls.object.rotation.x += 0.01;
-    }else if(e.movementY > 0) {
-        controls.object.rotation.x -= 0.01;
+    // if the mouse has moved, change the camera angle
+    
+    if(camera.rotation.x < 0-(Math.PI/2)) {
+        camera.rotation.x = 0-(Math.PI/2);
+    }else if(camera.rotation.x > Math.PI/2) {
+        camera.rotation.x = Math.PI/2;
     }
     console.log(e.movementX, e.movementY);
+
+    // update camera according to the mouse input
+    updateCamera();
+}
+
+// Is called every frame 
+function updateCamera() {
+
 }
 
 // runs when pointer lock state change is detected
@@ -182,10 +117,12 @@ function lockChangeAlert() {
         document.mozPointerLockElement === document.body ||
         document.webkitPointerLockElement === document.body) {
         console.log('The pointer lock status is now locked');
+        controlsEnabled = true;
         // Pointer was just locked, enable mousemove listener
         document.addEventListener("mousemove", updateMouse, false);
     }else {
         console.log('The pointer lock status is now unlocked');
+        controlsEnabled = false;
         // Pointer was just unlocked, disable mousemove listener
         document.removeEventListener("mousemove", updateMouse, false);
         document.exitPointerLock();
