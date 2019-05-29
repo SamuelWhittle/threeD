@@ -7,11 +7,16 @@ var boxGeometry, boxMaterial, cubeMesh;
 var controlsEnabled = false;
 
 // forward direction for player
-var forwardDirection = new THREE.Vector3(1, 0, 0);
+var forwardVector = new THREE.Vector3(0, 0, 1);
 // up direction for player
-var upDirection = new THREE.Vector3(0, 1, 0);
-// look direction for player
-var lookDirection = new THREE.Vector3(0, 0, 0);
+var upVector = new THREE.Vector3(0, 1, 0);
+// strafe direction for player
+var strafeVector = new THREE.Vector3(1, 0, 0);
+// the direction the camera is looking
+var lookVector = new THREE.Vector3(0, 0, 1);;
+
+//sensitivity
+var sensitivity = Math.PI/2;
 
 // main initialization function for setting things up before the rendering starts
 var init = function () {
@@ -42,7 +47,7 @@ var init = function () {
 
     // Basic three.js setup of scene(world) and camera
     scene = new THREE.Scene();
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+    camera = new THREE.PerspectiveCamera( 70, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
     // three js renderer
     renderer = new THREE.WebGLRenderer();
@@ -91,22 +96,22 @@ var animate = function () {
 
 // is called when pointer is locked and the mouse is moved
 function updateMouse(e) {
-    // if the mouse has moved, change the camera angle
+    // rotated angle is the ratio of pixels moved to total pixels multiplied by a number that is the sensitivity, these numbers are treated as radians
+    var rotatedAngleX = sensitivity*(-e.movementX/(window.innerWidth/2));
+    var rotatedAngleY = sensitivity*(-e.movementY/(window.innerHeight/2));
+    // if the mouse has moved, change the camera rotation
+    camera.rotateOnWorldAxis(upVector, rotatedAngleX);
+
+    // update the players look direction to match the objects world direction
+    camera.getWorldDirection(lookVector);
+
+    //update the directional vectors based off what we know, the lookVector and the upVector
+
+    // rotate camera on strafe axis to look up or down
+    camera.rotateOnAxis(strafeVector, rotatedAngleY);
     
-    if(camera.rotation.x < 0-(Math.PI/2)) {
-        camera.rotation.x = 0-(Math.PI/2);
-    }else if(camera.rotation.x > Math.PI/2) {
-        camera.rotation.x = Math.PI/2;
-    }
-    console.log(e.movementX, e.movementY);
-
-    // update camera according to the mouse input
-    updateCamera();
-}
-
-// Is called every frame 
-function updateCamera() {
-
+    console.log(camera.rotation);
+    console.log(forwardVector);
 }
 
 // runs when pointer lock state change is detected
