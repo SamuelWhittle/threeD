@@ -1,19 +1,31 @@
 var scene, camera, renderer;
 var light;
 var floorGeometry, floorMaterial, floorMesh;
-var boxGeometry, boxMaterial, cubeMesh;
+var centerCubeGeometry, CenterCubeMaterial, centercenterCubeMesh;
+
+// visual aids
+var cameraLookVectorVisualGeometry, cameraLookVectorVisualMaterial, cameraLookVectorVisualMesh;
 
 // if pointer lock is on this is true
 var controlsEnabled = false;
 
-// forward direction for player
-var forwardVector = new THREE.Vector3(0, 0, 1);
 // up direction for player
-var upVector = new THREE.Vector3(0, 1, 0);
+var upVector;
+var lastUpVector;
+
+// forward direction for player
+var forwardVector;
+// vector the camera rotates around to adjust when the up vector changes
+var localSpaceForwardVector;
+
 // strafe direction for player
-var strafeVector = new THREE.Vector3(1, 0, 0);
+var worldSpaceStrafeVector;
+// vector the camera rotates on to look up and down
+var localSpaceStrafeVector;
+
 // the direction the camera is looking
-var lookVector = new THREE.Vector3(0, 0, 1);;
+var lookEuler;
+
 
 //sensitivity
 var sensitivity = Math.PI/2;
@@ -56,13 +68,24 @@ var init = function () {
     // slap that rendered image into the html somewhere
 	document.body.appendChild( renderer.domElement );
 
-    // Dem cubes tho
-	boxGeometry = new THREE.BoxGeometry( 10, 10, 10 );
-    boxMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+    // Dem phat cubes tho
+	centerCubeGeometry = new THREE.CubeGeometry( 10, 10, 10 );
+    centerCubeMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
     // a Mesh is a material and a geometry
-    cubeMesh = new THREE.Mesh( boxGeometry, boxMaterial );
-    scene.add( cubeMesh );
-    cubeMesh.position.y = 10;
+    centerCubeMesh = new THREE.Mesh( centerCubeGeometry, centerCubeMaterial );
+    scene.add( centerCubeMesh );
+    centerCubeMesh.position.y = 10;
+    //centerCubeMesh.castShadow = true;
+
+    // visual player axis vectors
+    // look vector box
+    cameraLookVectorVisualGeometry = new THREE.CubeGeometry(1, 1, 10);
+    cameraLookVectorVisualMaterial = new THREE.MeshPhongMaterial({color: 0x0000ff});
+    cameraLookVectorVisualMesh = new THREE.Mesh(cameraLookVectorVisualGeometry, cameraLookVectorVisualMaterial);
+    scene.add(cameraLookVectorVisualMesh);
+    cameraLookVectorVisualMesh.position.y = 5;
+    cameraLookVectorVisualMesh.position.z = 10;
+    cameraLookVectorVisualMesh.rotation.y = Math.PI/2;
     
     // Create a HemisphereLight source
     light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
@@ -78,40 +101,100 @@ var init = function () {
     floorMaterial = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
     floorMesh = new THREE.Mesh( floorGeometry, floorMaterial );
     scene.add( floorMesh );
+    //floorMesh.receiveShadow = true;
 
+    // initialize player directional vectors
+    // players up direction
+    upVector = new THREE.Vector3();
+    // if the upVector changes this stores the previous vector for reasons
+    lastUpVector = new THREE.Vector3();
+
+    // strafe direction for player
+    worldSpaceStrafeVector = new THREE.Vector3();
+    // set local vector constants
+    localSpaceStrafeVector = new THREE.Vector3(1, 0, 0);
+    
+    // forward direction for player
+    forwardVector = new THREE.Vector3();
+    // local forward direction for player
+    localSpaceForwardVector = new THREE.Vector3(0, 0, 1);
+
+    // method tha takes the up vector and calculates the rest of the directional vectors
+    setDirectionalVectors(new THREE.Vector3(0, 1, 0));
+
+    // set original camera position
     camera.position.y = 10;
     camera.position.z = 50;
+
+    //set original camera rotation
+    camera.lookAt(camera.localToWorld(forwardVector));
 
     console.log('initialized');
 };
 
+// runs in a loop, does all the shit
 var animate = function () {
-	requestAnimationFrame( animate );
+    requestAnimationFrame( animate );
 
-	cubeMesh.rotation.x += 0.01;
-    cubeMesh.rotation.y += 0.01;
+    // rotate dat phat cube there
+	centerCubeMesh.rotation.x += 0.01;
+    centerCubeMesh.rotation.y += 0.01;
 
+    //render and display the scene
 	renderer.render( scene, camera );
 };
 
+// sets the players directional vectors like forward and strafe based on the up vector
+function setDirectionalVectors(newUpVector) {
+    console.log("new up vector");
+    console.log(newUpVector);
+
+    // Record current upVector
+    lastUpVector.copy(upVector);
+
+    // change the upVector to the new upVector
+    upVector.copy(newUpVector);
+
+    // strafe direction for player
+    worldSpaceStrafeVector.crossVectors(newUpVector, new THREE.Vector3(0, 0, 1));
+
+    // if the cross product between up vector and the world y axis is 0, up vector must be either straight up or straight down
+    if(worldSpaceStrafeVector.x == 0 && worldSpaceStrafeVector.y == 0 && worldSpaceStrafeVector.z == 0) {
+        // set the x comp of the strafe vector equal to the y comp of the up vector
+        worldSpaceStrafeVector.x = newUpVector.y;
+    }
+
+    // forward direction for player
+    forwardVector.crossVectors(worldSpaceStrafeVector, newUpVector);
+
+    //change the cameras saved up direction as the upVector
+    camera.rotateOnAxis(localSpaceForwardVector, Math.acos(newUpVector.y)); console.log(Math.acos(newUpVector.y));
+    console.log("directional vectors changed accordingly");
+}
+
 // is called when pointer is locked and the mouse is moved
 function updateMouse(e) {
+    // if there is a change in the up vector
+    if(lastUpVector.equals(upVector)) {
+        console.log("no change in upVector");
+    } else {
+        console.log('change in upVector');
+        setDirectionalVectors(upVector);
+    }
     // rotated angle is the ratio of pixels moved to total pixels multiplied by a number that is the sensitivity, these numbers are treated as radians
-    var rotatedAngleX = sensitivity*(-e.movementX/(window.innerWidth/2));
-    var rotatedAngleY = sensitivity*(-e.movementY/(window.innerHeight/2));
-    // if the mouse has moved, change the camera rotation
-    camera.rotateOnWorldAxis(upVector, rotatedAngleX);
+    var rotatedXAngle = sensitivity*(-e.movementX/(window.innerWidth/2));
+    var rotatedYAngle = sensitivity*(-e.movementY/(window.innerHeight/2));
 
-    // update the players look direction to match the objects world direction
-    camera.getWorldDirection(lookVector);
+    // if the mouse has moved +/- X, change the camera rotation
+    camera.rotateOnWorldAxis(upVector, rotatedXAngle);
 
-    //update the directional vectors based off what we know, the lookVector and the upVector
+    // update the worldSpaceStrafeVector according to the new forward direction
 
-    // rotate camera on strafe axis to look up or down
-    camera.rotateOnAxis(strafeVector, rotatedAngleY);
-    
-    console.log(camera.rotation);
-    console.log(forwardVector);
+    // if the mouse has move +/- Y, change the camera rotation
+    camera.rotateOnAxis(localSpaceStrafeVector, rotatedYAngle);
+
+    //update all the visual aids
+    cameraLookVectorVisualMesh.setRotationFromEuler(camera.rotation);
 }
 
 // runs when pointer lock state change is detected
