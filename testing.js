@@ -5,6 +5,7 @@ var centerCubeGeometry, CenterCubeMaterial, centercenterCubeMesh;
 
 // visual aids
 var cameraLookVectorVisualGeometry, cameraLookVectorVisualMaterial, cameraLookVectorVisualMesh;
+var cameraForwardVectorVisualGeometry, cameraForwardVectorVisualMaterial, cameraForwardVectorVisualMesh;
 
 // if pointer lock is on this is true
 var controlsEnabled = false;
@@ -86,6 +87,14 @@ var init = function () {
     cameraLookVectorVisualMesh.position.y = 5;
     cameraLookVectorVisualMesh.position.z = 10;
     cameraLookVectorVisualMesh.rotation.y = Math.PI/2;
+
+    cameraForwardVectorVisualGeometry = new THREE.CubeGeometry(1, 1, 10);
+    cameraForwardVectorVisualMaterial = new THREE.MeshPhongMaterial({color: 0x00ffff});
+    cameraForwardVectorVisualMesh = new THREE.Mesh(cameraForwardVectorVisualGeometry, cameraForwardVectorVisualMaterial);
+    scene.add(cameraForwardVectorVisualMesh);
+    cameraForwardVectorVisualMesh.position.y = 5;
+    cameraForwardVectorVisualMesh.position.z = 10;
+    cameraForwardVectorVisualMesh.rotation.y = Math.PI/2;
     
     // Create a HemisphereLight source
     light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
@@ -167,8 +176,10 @@ function setDirectionalVectors(newUpVector) {
     // forward direction for player
     forwardVector.crossVectors(worldSpaceStrafeVector, newUpVector);
 
-    //change the cameras saved up direction as the upVector
-    camera.rotateOnAxis(localSpaceForwardVector, Math.acos(newUpVector.y)); console.log(Math.acos(newUpVector.y));
+    //properly rotate the camera to accomodate the change in the upVector
+    camera.lookAt(camera.localToWorld(0, 0, 1));
+    camera.rotateOnWorldAxis(forwardVector, );
+    //camera.rotateOnAxis(localSpaceForwardVector, Math.acos(newUpVector.y)); console.log(Math.acos(newUpVector.y));
     console.log("directional vectors changed accordingly");
 }
 
