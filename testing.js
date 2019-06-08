@@ -121,27 +121,24 @@ var init = function () {
     //  local space up direction
     localSpaceUpVector = new THREE.Vector3(0, 1, 0);
     //  last known world space up vector before the current
-    lastUpVector = new THREE.Vector3();
+    lastUpVector = new THREE.Vector3(0, 1, 0);
 
     //  world space strafe direction
-    worldSpaceStrafeVector = new THREE.Vector3();
+    worldSpaceStrafeVector = new THREE.Vector3(1, 0, 0);
     //  local space strafe direction, should never change
     localSpaceStrafeVector = new THREE.Vector3(1, 0, 0);
     
     // world space forward direction
-    worldSpaceForwardVector = new THREE.Vector3();
+    worldSpaceForwardVector = new THREE.Vector3(0, 0, -1);
     // local space forward direction, should never change
-    localSpaceForwardVector = new THREE.Vector3(0, 0, 1);
-
-    // method that takes the worldSpaceUpVector and calculates the rest of the directional vectors
-    setDirectionalVectors(worldSpaceUpVector);
+    localSpaceForwardVector = new THREE.Vector3(0, 0, -1);
 
     // set original camera position
     camera.position.y = 10;
     camera.position.z = 50;
 
     //set original camera rotation
-    camera.lookAt(camera.localToWorld(localSpaceForwardVector));
+    //camera.lookAt(camera.localToWorld(localSpaceForwardVector));
 
     console.log('initialized');
 };
@@ -151,7 +148,7 @@ var animate = function () {
     requestAnimationFrame( animate );
 
     // rotate dat phat cube there
-	centerCubeMesh.rotation.x += 0.01;
+	centerCubeMesh.rotation.z += 0.01;
     centerCubeMesh.rotation.y += 0.01;
 
     //render and display the scene
@@ -159,7 +156,7 @@ var animate = function () {
 };
 
 // is called when pointer is locked and the mouse is moved
-function updateMouse(e) {console.log(worldSpaceStrafeVector);
+function updateMouse(e) {
     // if there is a change in the up vector
     if(!lastUpVector.equals(worldSpaceUpVector)) {
         setDirectionalVectors(worldSpaceUpVector);
@@ -170,7 +167,7 @@ function updateMouse(e) {console.log(worldSpaceStrafeVector);
     // xRotQuat is a quaternion representing the mouses movement in the x direction as a rotation around a specified up axis
     var xRotQuat = new THREE.Quaternion();
     // set the quaternion by an axis of rotation and a rotation angle
-    xRotQuat.setFromAxisAngle(worldSpaceUpVector, sensitivity*(-e.movementX/(window.innerWidth/2)));
+    xRotQuat.setFromAxisAngle(worldSpaceUpVector, -sensitivity*(e.movementX/(window.innerWidth/2)));
     // apply the quaternion to the camera
     camera.applyQuaternion(xRotQuat);
     //apply the quaternion to the worldSpaceStrafeVector and forwardVector
@@ -179,7 +176,7 @@ function updateMouse(e) {console.log(worldSpaceStrafeVector);
 
     // yRotQuat is basically the same as xRotQuat in function but rotates the camera around the cameras strafe vector
     var yRotQuat = new THREE.Quaternion();
-    yRotQuat.setFromAxisAngle(worldSpaceStrafeVector, sensitivity*(-e.movementY/(window.innerHeight/2)));
+    yRotQuat.setFromAxisAngle(worldSpaceStrafeVector, -sensitivity*(e.movementY/(window.innerHeight/2)));
     camera.applyQuaternion(yRotQuat);
     
     //update all the visual aids
@@ -190,38 +187,35 @@ function updateMouse(e) {console.log(worldSpaceStrafeVector);
 
 // sets the players directional vectors like forward and strafe based on the up vector
 function setDirectionalVectors(newUpVector) {
-    console.log("new up vector");
-
-    // Record current upVector
+    // Record current directional vectors
+    //  last up 
     lastUpVector.copy(worldSpaceUpVector);
+    //  last strafe
+    var lastStrafeVector = new THREE.Vector3();
+    lastStrafeVector.copy(worldSpaceStrafeVector);
+    //  save current forward Vector
+    var lastForwardVector = new THREE.Vector3();
+    lastForwardVector.copy(worldSpaceForwardVector);
 
     // change the upVector to the new upVector
     worldSpaceUpVector.copy(newUpVector.normalize());
 
-    var lastStrafeVector = new THREE.Vector3();
-    lastStrafeVector.copy(worldSpaceStrafeVector);
-    // strafe direction for player
-    worldSpaceStrafeVector.crossVectors(newUpVector, worldSpaceForwardVector);
+    // calculate new strafe vector for new up direction
+    worldSpaceStrafeVector.crossVectors(camera.getWorldDirection(new THREE.Vector3()), worldSpaceUpVector);
+    worldSpaceStrafeVector.normalize();console.log(worldSpaceStrafeVector);
 
-    // if the cross product between up vector and the world y axis is 0, up vector must be either straight up or straight down
+    // if the cross product between up vector and the world y axis is 0, dont change it from what it was?
     if(worldSpaceStrafeVector.x == 0 && worldSpaceStrafeVector.y == 0 && worldSpaceStrafeVector.z == 0) {
-        // set the x comp of the strafe vector equal to the y comp of the up vector
-        worldSpaceStrafeVector.x = newUpVector.y;
-        
-        if(newUpVector.y < 0) {
-            worldSpaceStrafeVector.x *= -1;
-        }
+        // revert to previous strafe vector
+        worldSpaceStrafeVector.copy(lastStrafeVector);console.log("no need to change strafe vector");
     }
-
-    // update forward direction for player
-    var lastForwardVector = new THREE.Vector3();
-    lastForwardVector.copy(worldSpaceForwardVector);
     
-    //camera.rotateOnAxis(localSpaceForwardVector, lastUpVector.angleTo(worldSpaceUpVector));
-    camera.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(lastStrafeVector, worldSpaceStrafeVector));
-    camera.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(lastForwardVector, camera.getWorldDirection));
+    // get new forward vector based off the new strafe and up vector
+    worldSpaceForwardVector.crossVectors(worldSpaceUpVector, worldSpaceStrafeVector);
 
-    //properly rotate the camera to accomodate the change in the upVector
+    // so theoretically now the camera is set up to only need to rotate around its forward axis to adjust for the new gravity
+    // yeah lets do that now i guess
+    camera.rotateOnAxis(localSpaceForwardVector, lastUpVector.angleTo(worldSpaceUpVector));
     
     console.log("directional vectors changed accordingly");
 }
