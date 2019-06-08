@@ -95,7 +95,7 @@ var init = function () {
     parent = new THREE.Object3D();
     scene.add(parent);
     cameraStrafeVectorVisualMesh = new THREE.Mesh(new THREE.CubeGeometry(10, 1, 1), new THREE.MeshPhongMaterial({color: 0x00ffff}));
-    cameraStrafeVectorVisualMesh.position.x = -5;
+    cameraStrafeVectorVisualMesh.position.x = 5;
     parent.position.y = 5;
     parent.position.z = 10;
     parent.add(cameraStrafeVectorVisualMesh);
@@ -200,9 +200,9 @@ function setDirectionalVectors(newUpVector) {
     // change the upVector to the new upVector
     worldSpaceUpVector.copy(newUpVector.normalize());
 
-    // calculate new strafe vector for new up direction
+    // calculate new strafe vector
     worldSpaceStrafeVector.crossVectors(camera.getWorldDirection(new THREE.Vector3()), worldSpaceUpVector);
-    worldSpaceStrafeVector.normalize();console.log(worldSpaceStrafeVector);
+    worldSpaceStrafeVector.normalize();
 
     // if the cross product between up vector and the world y axis is 0, dont change it from what it was?
     if(worldSpaceStrafeVector.x == 0 && worldSpaceStrafeVector.y == 0 && worldSpaceStrafeVector.z == 0) {
