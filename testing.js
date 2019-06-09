@@ -137,9 +137,6 @@ var init = function () {
     camera.position.y = 10;
     camera.position.z = 50;
 
-    //set original camera rotation
-    //camera.lookAt(camera.localToWorld(localSpaceForwardVector));
-
     console.log('initialized');
 };
 
@@ -180,13 +177,14 @@ function updateMouse(e) {
     camera.applyQuaternion(yRotQuat);
     
     //update all the visual aids
-    cameraLookVectorVisualMesh.setRotationFromEuler(camera.rotation);
+    cameraLookVectorVisualMesh.applyQuaternion(xRotQuat);
+    cameraLookVectorVisualMesh.applyQuaternion(yRotQuat);
     //cameraStrafeVectorVisualMesh.applyQuaternion(xRotQuat);
     parent.applyQuaternion(xRotQuat);
 }
 
 // sets the players directional vectors like forward and strafe based on the up vector
-function setDirectionalVectors(newUpVector) {
+function setDirectionalVectors(newUpVector) {console.log("function start");console.log(worldSpaceUpVector);console.log(worldSpaceStrafeVector);console.log(worldSpaceForwardVector);
     // Record current directional vectors
     //  last up 
     lastUpVector.copy(worldSpaceUpVector);
@@ -197,27 +195,28 @@ function setDirectionalVectors(newUpVector) {
     var lastForwardVector = new THREE.Vector3();
     lastForwardVector.copy(worldSpaceForwardVector);
 
-    // change the upVector to the new upVector
+    // Set new directional vectors
+    //  new Up
     worldSpaceUpVector.copy(newUpVector.normalize());
-
-    // calculate new strafe vector
-    worldSpaceStrafeVector.crossVectors(camera.getWorldDirection(new THREE.Vector3()), worldSpaceUpVector);
+    //  new strafe
+    worldSpaceStrafeVector.crossVectors(lastForwardVector, worldSpaceUpVector);
     worldSpaceStrafeVector.normalize();
-
-    // if the cross product between up vector and the world y axis is 0, dont change it from what it was?
+    //var rotateNewStrafe = new THREE.Quaternion();
+    //rotateNewStrafe.setFromAxisAngle(worldSpaceUpVector, lastForwardVector.angleTo(camera.getWorldDirection(new THREE.Vector3)));
+    //worldSpaceStrafeVector.applyQuaternion(rotateNewStrafe);
+    //  if the cross product is 0, dont change it from what it was?
     if(worldSpaceStrafeVector.x == 0 && worldSpaceStrafeVector.y == 0 && worldSpaceStrafeVector.z == 0) {
         // revert to previous strafe vector
         worldSpaceStrafeVector.copy(lastStrafeVector);console.log("no need to change strafe vector");
     }
-    
-    // get new forward vector based off the new strafe and up vector
+    //  new forward
     worldSpaceForwardVector.crossVectors(worldSpaceUpVector, worldSpaceStrafeVector);
 
     // so theoretically now the camera is set up to only need to rotate around its forward axis to adjust for the new gravity
     // yeah lets do that now i guess
     camera.rotateOnAxis(localSpaceForwardVector, lastUpVector.angleTo(worldSpaceUpVector));
     
-    console.log("directional vectors changed accordingly");
+    console.log("directional vectors changed accordingly");console.log(worldSpaceUpVector);console.log(worldSpaceStrafeVector);console.log(worldSpaceForwardVector);
 }
 
 // runs when pointer lock state change is detected
