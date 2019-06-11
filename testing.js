@@ -41,7 +41,8 @@ var moving = {
     forward: false,
     backward: false,
     left: false,
-    right: false
+    right: false,
+    speed: 1
 };
 
 // main initialization function for setting things up before the rendering starts
@@ -154,16 +155,34 @@ var animate = function () {
     // rotate dat phat cube there
 	centerCubeMesh.rotation.z += 0.01;
     centerCubeMesh.rotation.y += 0.01;
+    //centerCubeMesh.translateX(0.1);
 
-    playerControls();
+    updatePosition();
 
     //render and display the scene
 	renderer.render( scene, camera );
 };
 
-function playerControls() {
+// if the controls are enabled the camera will move depending on keyboard input
+function updatePosition() {
     if(controlsEnabled) {
-        console.log("controls are active");
+        console.log("controls are active, update position");
+        if(moving.forward) {
+            camera.position.x += worldSpaceForwardVector.x * moving.speed;
+            camera.position.y += worldSpaceForwardVector.y * moving.speed;
+            camera.position.z += worldSpaceForwardVector.z * moving.speed;
+        }
+        if(moving.backward) {
+            camera.position.x += worldSpaceForwardVector.x * -moving.speed;
+            camera.position.y += worldSpaceForwardVector.y * -moving.speed;
+            camera.position.z += worldSpaceForwardVector.z * -moving.speed;
+        }
+        if(moving.right) {
+            camera.translateX(moving.speed);
+        }
+        if(moving.left) {
+            camera.translateX(-moving.speed);
+        }
     }
 }
 
@@ -182,7 +201,7 @@ function updateMouse(e) {
     xRotQuat.setFromAxisAngle(worldSpaceUpVector, -sensitivity*(e.movementX/(window.innerWidth/2)));
     // apply the quaternion to the camera
     camera.applyQuaternion(xRotQuat);
-    //apply the quaternion to the worldSpaceStrafeVector and forwardVector
+    // apply the quaternion to the worldSpaceStrafeVector and forwardVector
     worldSpaceStrafeVector.applyQuaternion(xRotQuat);
     worldSpaceForwardVector.applyQuaternion(xRotQuat);
 
@@ -191,10 +210,10 @@ function updateMouse(e) {
     yRotQuat.setFromAxisAngle(worldSpaceStrafeVector, -sensitivity*(e.movementY/(window.innerHeight/2)));
     camera.applyQuaternion(yRotQuat);
     
-    //update all the visual aids
+    // update all the visual aids
     cameraLookVectorVisualMesh.applyQuaternion(xRotQuat);
     cameraLookVectorVisualMesh.applyQuaternion(yRotQuat);
-    //cameraStrafeVectorVisualMesh.applyQuaternion(xRotQuat);
+    // cameraStrafeVectorVisualMesh.applyQuaternion(xRotQuat);
     parent.applyQuaternion(xRotQuat);
 }
 
@@ -216,14 +235,17 @@ function setDirectionalVectors(newUpVector) {console.log("function start");conso
     //  new strafe
     worldSpaceStrafeVector.crossVectors(lastForwardVector, worldSpaceUpVector);
     worldSpaceStrafeVector.normalize();
+
     //var rotateNewStrafe = new THREE.Quaternion();
     //rotateNewStrafe.setFromAxisAngle(worldSpaceUpVector, lastForwardVector.angleTo(camera.getWorldDirection(new THREE.Vector3)));
     //worldSpaceStrafeVector.applyQuaternion(rotateNewStrafe);
+
     //  if the cross product is 0, dont change it from what it was?
     if(worldSpaceStrafeVector.x == 0 && worldSpaceStrafeVector.y == 0 && worldSpaceStrafeVector.z == 0) {
         // revert to previous strafe vector
         worldSpaceStrafeVector.copy(lastStrafeVector);console.log("no need to change strafe vector");
     }
+
     //  new forward
     worldSpaceForwardVector.crossVectors(worldSpaceUpVector, worldSpaceStrafeVector);
 
