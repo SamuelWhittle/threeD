@@ -33,9 +33,16 @@ var localSpaceStrafeVector;
 // the direction the camera is looking
 var lookEuler;
 
-
-//sensitivity
+// sensitivity
 var sensitivity = Math.PI/2;
+
+// is the camera moving?
+var moving = {
+    forward: false,
+    backward: false,
+    left: false,
+    right: false
+};
 
 // main initialization function for setting things up before the rendering starts
 var init = function () {
@@ -148,9 +155,17 @@ var animate = function () {
 	centerCubeMesh.rotation.z += 0.01;
     centerCubeMesh.rotation.y += 0.01;
 
+    playerControls();
+
     //render and display the scene
 	renderer.render( scene, camera );
 };
+
+function playerControls() {
+    if(controlsEnabled) {
+        console.log("controls are active");
+    }
+}
 
 // is called when pointer is locked and the mouse is moved
 function updateMouse(e) {
@@ -230,12 +245,54 @@ function lockChangeAlert() {
         controlsEnabled = true;
         // Pointer was just locked, enable mousemove listener
         document.addEventListener("mousemove", updateMouse, false);
+        // enable keyboard listening
+        document.addEventListener('keydown', keyDown, false);
+        document.addEventListener('keyup', keyUp, false);
     }else {
         console.log('The pointer lock status is now unlocked');
         controlsEnabled = false;
         // Pointer was just unlocked, disable mousemove listener
         document.removeEventListener("mousemove", updateMouse, false);
+        // disable keyboard listening
+        document.removeEventListener('keydown', keyDown, false);
+        document.removeEventListener('keyup', keyUp, false);
         document.exitPointerLock();
+    }
+}
+
+// on keydown event run this function
+function keyDown(e) {
+    switch (e.keyCode) {
+        case 87:
+            moving.forward = true;
+            break;
+        case 83:
+            moving.backward = true;
+            break;
+        case 65:
+            moving.left = true;
+            break;
+        case 68:
+            moving.right = true;
+            break;
+    }
+}
+
+// on keyup event run this function
+function keyUp(e) {
+    switch (e.keyCode) {
+        case 87:
+            moving.forward = false;
+            break;
+        case 83:
+            moving.backward = false;
+            break;
+        case 65:
+            moving.left = false;
+            break;
+        case 68:
+            moving.right = false;
+            break;
     }
 }
 
