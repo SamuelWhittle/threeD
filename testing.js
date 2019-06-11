@@ -178,10 +178,14 @@ function updatePosition() {
             camera.position.z += worldSpaceForwardVector.z * -moving.speed;
         }
         if(moving.right) {
-            camera.translateX(moving.speed);
+            camera.position.x += worldSpaceStrafeVector.x * moving.speed;
+            camera.position.y += worldSpaceStrafeVector.y * moving.speed;
+            camera.position.z += worldSpaceStrafeVector.z * moving.speed;
         }
         if(moving.left) {
-            camera.translateX(-moving.speed);
+            camera.position.x += worldSpaceStrafeVector.x * -moving.speed;
+            camera.position.y += worldSpaceStrafeVector.y * -moving.speed;
+            camera.position.z += worldSpaceStrafeVector.z * -moving.speed;
         }
     }
 }
