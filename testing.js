@@ -240,10 +240,6 @@ function setDirectionalVectors(newUpVector) {console.log("function start");conso
     worldSpaceStrafeVector.crossVectors(lastForwardVector, worldSpaceUpVector);
     worldSpaceStrafeVector.normalize();
 
-    //var rotateNewStrafe = new THREE.Quaternion();
-    //rotateNewStrafe.setFromAxisAngle(worldSpaceUpVector, lastForwardVector.angleTo(camera.getWorldDirection(new THREE.Vector3)));
-    //worldSpaceStrafeVector.applyQuaternion(rotateNewStrafe);
-
     //  if the cross product is 0, dont change it from what it was?
     if(worldSpaceStrafeVector.x == 0 && worldSpaceStrafeVector.y == 0 && worldSpaceStrafeVector.z == 0) {
         // revert to previous strafe vector
@@ -255,7 +251,7 @@ function setDirectionalVectors(newUpVector) {console.log("function start");conso
 
     // so theoretically now the camera is set up to only need to rotate around its forward axis to adjust for the new gravity
     // yeah lets do that now i guess
-    camera.rotateOnAxis(localSpaceForwardVector, lastUpVector.angleTo(worldSpaceUpVector));
+    camera.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(camera.getWorldDirection(new THREE.Vector3()), lastUpVector.angleTo(worldSpaceUpVector)));
     
     console.log("directional vectors changed accordingly");console.log(worldSpaceUpVector);console.log(worldSpaceStrafeVector);console.log(worldSpaceForwardVector);
 }
