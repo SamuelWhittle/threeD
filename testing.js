@@ -163,33 +163,6 @@ var animate = function () {
 	renderer.render( scene, camera );
 };
 
-// if the controls are enabled the camera will move depending on keyboard input
-function updatePosition() {
-    if(controlsEnabled) {
-        console.log("controls are active, update position");
-        if(moving.forward) {
-            camera.position.x += worldSpaceForwardVector.x * moving.speed;
-            camera.position.y += worldSpaceForwardVector.y * moving.speed;
-            camera.position.z += worldSpaceForwardVector.z * moving.speed;
-        }
-        if(moving.backward) {
-            camera.position.x += worldSpaceForwardVector.x * -moving.speed;
-            camera.position.y += worldSpaceForwardVector.y * -moving.speed;
-            camera.position.z += worldSpaceForwardVector.z * -moving.speed;
-        }
-        if(moving.right) {
-            camera.position.x += worldSpaceStrafeVector.x * moving.speed;
-            camera.position.y += worldSpaceStrafeVector.y * moving.speed;
-            camera.position.z += worldSpaceStrafeVector.z * moving.speed;
-        }
-        if(moving.left) {
-            camera.position.x += worldSpaceStrafeVector.x * -moving.speed;
-            camera.position.y += worldSpaceStrafeVector.y * -moving.speed;
-            camera.position.z += worldSpaceStrafeVector.z * -moving.speed;
-        }
-    }
-}
-
 // is called when pointer is locked and the mouse is moved
 function updateMouse(e) {
     // if there is a change in the up vector
@@ -256,6 +229,69 @@ function setDirectionalVectors(newUpVector) {console.log("function start");conso
     console.log("directional vectors changed accordingly");console.log(worldSpaceUpVector);console.log(worldSpaceStrafeVector);console.log(worldSpaceForwardVector);
 }
 
+// if the controls are enabled the camera will move depending on keyboard input
+function updatePosition() {
+    if(controlsEnabled) {
+        console.log("controls are active, update position");
+        if(moving.forward) {
+            camera.position.x += worldSpaceForwardVector.x * moving.speed;
+            camera.position.y += worldSpaceForwardVector.y * moving.speed;
+            camera.position.z += worldSpaceForwardVector.z * moving.speed;
+        }
+        if(moving.backward) {
+            camera.position.x += worldSpaceForwardVector.x * -moving.speed;
+            camera.position.y += worldSpaceForwardVector.y * -moving.speed;
+            camera.position.z += worldSpaceForwardVector.z * -moving.speed;
+        }
+        if(moving.right) {
+            camera.position.x += worldSpaceStrafeVector.x * moving.speed;
+            camera.position.y += worldSpaceStrafeVector.y * moving.speed;
+            camera.position.z += worldSpaceStrafeVector.z * moving.speed;
+        }
+        if(moving.left) {
+            camera.position.x += worldSpaceStrafeVector.x * -moving.speed;
+            camera.position.y += worldSpaceStrafeVector.y * -moving.speed;
+            camera.position.z += worldSpaceStrafeVector.z * -moving.speed;
+        }
+    }
+}
+
+// on keydown event run this function, it runs the code for the different keys hit
+function keyDown(e) {
+    switch (e.keyCode) {
+        case 87:
+            moving.forward = true;
+            break;
+        case 83:
+            moving.backward = true;
+            break;
+        case 65:
+            moving.left = true;
+            break;
+        case 68:
+            moving.right = true;
+            break;
+    }
+}
+
+// on keyup event run this function, it runs the code for when a key that is pressed is released
+function keyUp(e) {
+    switch (e.keyCode) {
+        case 87:
+            moving.forward = false;
+            break;
+        case 83:
+            moving.backward = false;
+            break;
+        case 65:
+            moving.left = false;
+            break;
+        case 68:
+            moving.right = false;
+            break;
+    }
+}
+
 // runs when pointer lock state change is detected
 function lockChangeAlert() {
     // check to see if the element that is pointer locked is equal to the requested event
@@ -279,42 +315,6 @@ function lockChangeAlert() {
         document.removeEventListener('keydown', keyDown, false);
         document.removeEventListener('keyup', keyUp, false);
         document.exitPointerLock();
-    }
-}
-
-// on keydown event run this function
-function keyDown(e) {
-    switch (e.keyCode) {
-        case 87:
-            moving.forward = true;
-            break;
-        case 83:
-            moving.backward = true;
-            break;
-        case 65:
-            moving.left = true;
-            break;
-        case 68:
-            moving.right = true;
-            break;
-    }
-}
-
-// on keyup event run this function
-function keyUp(e) {
-    switch (e.keyCode) {
-        case 87:
-            moving.forward = false;
-            break;
-        case 83:
-            moving.backward = false;
-            break;
-        case 65:
-            moving.left = false;
-            break;
-        case 68:
-            moving.right = false;
-            break;
     }
 }
 
