@@ -13,7 +13,7 @@ var cameraStrafeVectorVisualMesh;
 var controlsEnabled = false;
 
 // up direction for player
-var worldSpaceUpVector;
+var objectSpaceUpVector;
 // just to have a (0, 1, 0) vector handy
 var localSpaceUpVector;
 
@@ -21,12 +21,12 @@ var localSpaceUpVector;
 var lastUpVector;
 
 // forward direction for player
-var worldSpaceForwardVector;
+var objectSpaceForwardVector;
 // vector the camera rotates around to adjust when the up vector changes
 var localSpaceForwardVector;
 
 // strafe direction for player
-var worldSpaceStrafeVector;
+var objectSpaceStrafeVector;
 // vector the camera rotates on to look up and down
 var localSpaceStrafeVector;
 
@@ -99,7 +99,7 @@ var init = function () {
     cameraLookVectorVisualMesh.position.y = 5;
     cameraLookVectorVisualMesh.position.z = 10;
 
-    // lil shape that points in the direction of the worldSpaceStrafeVector
+    // lil shape that points in the direction of the objectSpaceStrafeVector
     parent = new THREE.Object3D();
     scene.add(parent);
     cameraStrafeVectorVisualMesh = new THREE.Mesh(new THREE.CubeGeometry(10, 1, 1), new THREE.MeshPhongMaterial({color: 0x00ffff}));
@@ -125,19 +125,19 @@ var init = function () {
 
     // initialize player directional vectors
     //  world space up direction
-    worldSpaceUpVector = new THREE.Vector3(0, 1, 0);
+    objectSpaceUpVector = new THREE.Vector3(0, 1, 0);
     //  local space up direction
     localSpaceUpVector = new THREE.Vector3(0, 1, 0);
     //  last known world space up vector before the current
     lastUpVector = new THREE.Vector3(0, 1, 0);
 
     //  world space strafe direction
-    worldSpaceStrafeVector = new THREE.Vector3(1, 0, 0);
+    objectSpaceStrafeVector = new THREE.Vector3(1, 0, 0);
     //  local space strafe direction, should never change
     localSpaceStrafeVector = new THREE.Vector3(1, 0, 0);
     
     // world space forward direction
-    worldSpaceForwardVector = new THREE.Vector3(0, 0, -1);
+    objectSpaceForwardVector = new THREE.Vector3(0, 0, -1);
     // local space forward direction, should never change
     localSpaceForwardVector = new THREE.Vector3(0, 0, -1);
 
@@ -166,8 +166,8 @@ var animate = function () {
 // is called when pointer is locked and the mouse is moved
 function updateMouse(e) {
     // if there is a change in the up vector
-    if(!lastUpVector.equals(worldSpaceUpVector)) {
-        setDirectionalVectors(worldSpaceUpVector);
+    if(!lastUpVector.equals(objectSpaceUpVector)) {
+        setDirectionalVectors(objectSpaceUpVector);
     }
 
     // rotated angle is the ratio of pixels moved by the mouse to total pixels on screen, multiplied by a number that is the sensitivity, 
@@ -175,16 +175,16 @@ function updateMouse(e) {
     // xRotQuat is a quaternion representing the mouses movement in the x direction as a rotation around a specified up axis
     var xRotQuat = new THREE.Quaternion();
     // set the quaternion by an axis of rotation and a rotation angle
-    xRotQuat.setFromAxisAngle(worldSpaceUpVector, -sensitivity*(e.movementX/(window.innerWidth/2)));
+    xRotQuat.setFromAxisAngle(objectSpaceUpVector, -sensitivity*(e.movementX/(window.innerWidth/2)));
     // apply the quaternion to the camera
     camera.applyQuaternion(xRotQuat);
-    // apply the quaternion to the worldSpaceStrafeVector and forwardVector
-    worldSpaceStrafeVector.applyQuaternion(xRotQuat);
-    worldSpaceForwardVector.applyQuaternion(xRotQuat);
+    // apply the quaternion to the objectSpaceStrafeVector and forwardVector
+    objectSpaceStrafeVector.applyQuaternion(xRotQuat);
+    objectSpaceForwardVector.applyQuaternion(xRotQuat);
 
     // yRotQuat is basically the same as xRotQuat in function but rotates the camera around the cameras strafe vector
     var yRotQuat = new THREE.Quaternion();
-    yRotQuat.setFromAxisAngle(worldSpaceStrafeVector, -sensitivity*(e.movementY/(window.innerHeight/2)));
+    yRotQuat.setFromAxisAngle(objectSpaceStrafeVector, -sensitivity*(e.movementY/(window.innerHeight/2)));
     camera.applyQuaternion(yRotQuat);
     
     // update all the visual aids
@@ -195,38 +195,42 @@ function updateMouse(e) {
 }
 
 // sets the players directional vectors like forward and strafe based on the up vector
-function setDirectionalVectors(newUpVector) {console.log("function start");console.log(worldSpaceUpVector);console.log(worldSpaceStrafeVector);console.log(worldSpaceForwardVector);
+function setDirectionalVectors(newUpVector) {console.log("function start");console.log(objectSpaceUpVector);console.log(objectSpaceStrafeVector);console.log(objectSpaceForwardVector);
     // Record current directional vectors
     //  last up 
-    lastUpVector.copy(worldSpaceUpVector);
+    lastUpVector.copy(objectSpaceUpVector);
     //  last strafe
     var lastStrafeVector = new THREE.Vector3();
-    lastStrafeVector.copy(worldSpaceStrafeVector);
+    lastStrafeVector.copy(objectSpaceStrafeVector);
     //  save current forward Vector
     var lastForwardVector = new THREE.Vector3();
-    lastForwardVector.copy(worldSpaceForwardVector);
+    lastForwardVector.copy(objectSpaceForwardVector);
 
     // Set new directional vectors
     //  new Up
-    worldSpaceUpVector.copy(newUpVector.normalize());
+    objectSpaceUpVector.copy(newUpVector.normalize());
     //  new strafe
-    worldSpaceStrafeVector.crossVectors(lastForwardVector, worldSpaceUpVector);
-    worldSpaceStrafeVector.normalize();
+    objectSpaceStrafeVector.crossVectors(lastForwardVector, objectSpaceUpVector);
+    objectSpaceStrafeVector.normalize();
 
     //  if the cross product is 0, dont change it from what it was?
-    if(worldSpaceStrafeVector.x == 0 && worldSpaceStrafeVector.y == 0 && worldSpaceStrafeVector.z == 0) {
+    if(objectSpaceStrafeVector.x == 0 && objectSpaceStrafeVector.y == 0 && objectSpaceStrafeVector.z == 0) {
         // revert to previous strafe vector
-        worldSpaceStrafeVector.copy(lastStrafeVector);console.log("no need to change strafe vector");
+        objectSpaceStrafeVector.copy(lastStrafeVector);console.log("no need to change strafe vector");
     }
 
     //  new forward
-    worldSpaceForwardVector.crossVectors(worldSpaceUpVector, worldSpaceStrafeVector);
+    objectSpaceForwardVector.crossVectors(objectSpaceUpVector, objectSpaceStrafeVector);
 
     // so theoretically now the camera is set up to only need to rotate around its forward axis to adjust for the new gravity
     // yeah lets do that now i guess
-    camera.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(camera.getWorldDirection(new THREE.Vector3()), lastUpVector.angleTo(worldSpaceUpVector)));
+    camera.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(camera.getWorldDirection(new THREE.Vector3()),
+        lastUpVector.clone()
+            .cross(lastForwardVector)
+            .angleTo(objectSpaceUpVector.clone()
+                .cross(objectSpaceForwardVector))));
     
-    console.log("directional vectors changed accordingly");console.log(worldSpaceUpVector);console.log(worldSpaceStrafeVector);console.log(worldSpaceForwardVector);
+    console.log("directional vectors changed accordingly");console.log(objectSpaceUpVector);console.log(objectSpaceStrafeVector);console.log(objectSpaceForwardVector);
 }
 
 // if the controls are enabled the camera will move depending on keyboard input
@@ -234,24 +238,24 @@ function updatePosition() {
     if(controlsEnabled) {
         console.log("controls are active, update position");
         if(moving.forward) {
-            camera.position.x += worldSpaceForwardVector.x * moving.speed;
-            camera.position.y += worldSpaceForwardVector.y * moving.speed;
-            camera.position.z += worldSpaceForwardVector.z * moving.speed;
+            camera.position.x += objectSpaceForwardVector.x * moving.speed;
+            camera.position.y += objectSpaceForwardVector.y * moving.speed;
+            camera.position.z += objectSpaceForwardVector.z * moving.speed;
         }
         if(moving.backward) {
-            camera.position.x += worldSpaceForwardVector.x * -moving.speed;
-            camera.position.y += worldSpaceForwardVector.y * -moving.speed;
-            camera.position.z += worldSpaceForwardVector.z * -moving.speed;
+            camera.position.x += objectSpaceForwardVector.x * -moving.speed;
+            camera.position.y += objectSpaceForwardVector.y * -moving.speed;
+            camera.position.z += objectSpaceForwardVector.z * -moving.speed;
         }
         if(moving.right) {
-            camera.position.x += worldSpaceStrafeVector.x * moving.speed;
-            camera.position.y += worldSpaceStrafeVector.y * moving.speed;
-            camera.position.z += worldSpaceStrafeVector.z * moving.speed;
+            camera.position.x += objectSpaceStrafeVector.x * moving.speed;
+            camera.position.y += objectSpaceStrafeVector.y * moving.speed;
+            camera.position.z += objectSpaceStrafeVector.z * moving.speed;
         }
         if(moving.left) {
-            camera.position.x += worldSpaceStrafeVector.x * -moving.speed;
-            camera.position.y += worldSpaceStrafeVector.y * -moving.speed;
-            camera.position.z += worldSpaceStrafeVector.z * -moving.speed;
+            camera.position.x += objectSpaceStrafeVector.x * -moving.speed;
+            camera.position.y += objectSpaceStrafeVector.y * -moving.speed;
+            camera.position.z += objectSpaceStrafeVector.z * -moving.speed;
         }
     }
 }
