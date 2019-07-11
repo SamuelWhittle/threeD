@@ -172,6 +172,7 @@ function updateMouse(e) {
 
     // rotated angle is the ratio of pixels moved by the mouse to total pixels on screen, multiplied by a number that is the sensitivity, 
     //  these numbers are treated as radians and used by quaternions to rotate the camera
+
     // xRotQuat is a quaternion representing the mouses movement in the x direction as a rotation around a specified up axis
     var xRotQuat = new THREE.Quaternion();
     // set the quaternion by an axis of rotation and a rotation angle
@@ -179,8 +180,8 @@ function updateMouse(e) {
     // apply the quaternion to the camera
     camera.applyQuaternion(xRotQuat);
     // apply the quaternion to the objectSpaceStrafeVector and forwardVector
-    objectSpaceStrafeVector.applyQuaternion(xRotQuat);
-    objectSpaceForwardVector.applyQuaternion(xRotQuat);
+    objectSpaceStrafeVector.applyQuaternion(xRotQuat).normalize();
+    objectSpaceForwardVector.applyQuaternion(xRotQuat).normalize();
 
     // yRotQuat is basically the same as xRotQuat in function but rotates the camera around the cameras strafe vector
     var yRotQuat = new THREE.Quaternion();
@@ -194,8 +195,13 @@ function updateMouse(e) {
     parent.applyQuaternion(xRotQuat);
 }
 
-// sets the players directional vectors like forward and strafe based on the up vector
-function setDirectionalVectors(newUpVector) {console.log("function start");console.log(objectSpaceUpVector);console.log(objectSpaceStrafeVector);console.log(objectSpaceForwardVector);
+// sets the players directional vectors like forward and strafe based on the up vector given
+function setDirectionalVectors(newUpVector) {
+    console.log("function start");
+    console.log(objectSpaceUpVector);
+    console.log(objectSpaceStrafeVector);
+    console.log(objectSpaceForwardVector);
+
     // Record current directional vectors
     //  last up 
     lastUpVector.copy(objectSpaceUpVector);
