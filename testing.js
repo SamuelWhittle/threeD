@@ -230,13 +230,23 @@ function setDirectionalVectors(newUpVector) {
 
     // so theoretically now the camera is set up to only need to rotate around its forward axis to adjust for the new gravity
     // yeah lets do that now i guess
-    camera.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(camera.getWorldDirection(new THREE.Vector3()),
-        lastUpVector.clone()
-            .cross(lastForwardVector)
-            .angleTo(objectSpaceUpVector.clone()
-                .cross(objectSpaceForwardVector))));
+    camera.applyQuaternion(
+        new THREE.Quaternion().setFromAxisAngle(
+            camera.getWorldDirection(new THREE.Vector3()),
+            lastUpVector.clone().cross(
+                lastForwardVector
+            ).angleTo(
+                objectSpaceUpVector.clone().cross(
+                    objectSpaceForwardVector
+                )
+            )
+        )
+    );
     
-    console.log("directional vectors changed accordingly");console.log(objectSpaceUpVector);console.log(objectSpaceStrafeVector);console.log(objectSpaceForwardVector);
+    console.log("directional vectors changed accordingly");
+    console.log(objectSpaceUpVector);
+    console.log(objectSpaceStrafeVector);
+    \console.log(objectSpaceForwardVector);
 }
 
 // if the controls are enabled the camera will move depending on keyboard input
