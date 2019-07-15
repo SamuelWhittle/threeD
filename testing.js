@@ -246,7 +246,7 @@ function setDirectionalVectors(newUpVector) {
     console.log("directional vectors changed accordingly");
     console.log(objectSpaceUpVector);
     console.log(objectSpaceStrafeVector);
-    \console.log(objectSpaceForwardVector);
+    console.log(objectSpaceForwardVector);
 }
 
 // if the controls are enabled the camera will move depending on keyboard input
